@@ -25,6 +25,8 @@ def add_income():
     entry_date.delete(0, tk.END)
 
 # Functions to clear default text on focus
+# on_focus_in: This function clears the text when the entry is focused, if it contains the default text.
+# on_focus_out: This function re-adds the default text if the entry is empty after losing focus.
 def on_focus_in(entry, default_text):
     if entry.get() == default_text:
         entry.delete(0, tk.END)
