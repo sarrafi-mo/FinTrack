@@ -1,5 +1,6 @@
 import tkinter as tk
 from pymongo import MongoClient
+from display_data import show_data  # Import the show_data function
 
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
@@ -27,7 +28,7 @@ def add_income():
 # Function to clear default text on focus
 # on_focus_in: This function clears the text when the entry is focused, if it contains the default text.
 # on_focus_out: This function re-adds the default text if the entry is empty after losing focus.
-    
+  
 def on_focus_in(entry, default_text):
     if entry.get() == default_text:
         entry.delete(0, tk.END)
@@ -35,26 +36,6 @@ def on_focus_in(entry, default_text):
 def on_focus_out(entry, default_text):
     if entry.get() == "":
         entry.insert(0, default_text)
-
-# Function to display saved data
-# show_data : Creates a new window, retrieves data from MongoDB, and displays each record.
-def show_data():
-    # Create a new window
-    data_window = tk.Toplevel(root)
-    data_window.title("Stored Data")
-    data_window.geometry("400x300")
-
-    # Retrieve data from MongoDB
-    records = income_collection.find()
-
-    # Display data in the new window
-    for index, record in enumerate(records):
-        tk.Label(data_window, text=f"Record {index + 1}").pack()
-        tk.Label(data_window, text=f"Amount: {record['amount']}").pack()
-        tk.Label(data_window, text=f"Source: {record['source']}").pack()
-        tk.Label(data_window, text=f"Description: {record['description']}").pack()
-        tk.Label(data_window, text=f"Date: {record['date']}").pack()
-        tk.Label(data_window, text="-" * 30).pack()  # Divider
 
 # Set up the GUI
 root = tk.Tk()
@@ -91,7 +72,7 @@ add_button = tk.Button(root, text="Add Income", command=add_income)
 add_button.pack(pady=15)
 
 # Button to show stored data
-show_data_button = tk.Button(root, text="Show Stored Data", command=show_data)
+show_data_button = tk.Button(root, text="Show Stored Data", command=lambda: show_data(root))
 show_data_button.pack(pady=5)
 
 root.mainloop()
