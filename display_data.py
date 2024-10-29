@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from pymongo import MongoClient
+from bson import ObjectId  # Import ObjectId for MongoDB IDs
 from tkinter import messagebox
 
 # Connect to MongoDB
@@ -8,14 +9,17 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['financial_tracker']
 income_collection = db['income']
 
-# Function to delete a record
+# Function to delete a record with confirmation
 def delete_record(record_id, tree):
-    income_collection.delete_one({"_id": record_id})
-    messagebox.showinfo("Deleted", "Record deleted successfully.")
-    # Refresh the table view
-    for item in tree.get_children():
-        tree.delete(item)
-    load_data(tree)
+    confirm = messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this record?")
+    if confirm:
+        # Convert record_id to ObjectId before deletion
+        income_collection.delete_one({"_id": ObjectId(record_id)})
+        messagebox.showinfo("Deleted", "Record deleted successfully.")
+        # Refresh the table view
+        for item in tree.get_children():
+            tree.delete(item)
+        load_data(tree)
 
 # Function to load data into the table
 def load_data(tree):
@@ -34,8 +38,8 @@ def show_data(root):
     style = ttk.Style()
     style.configure("Treeview.Heading", font=("Arial", 10, "bold"))
     style.configure("Treeview", rowheight=25, font=("Arial", 10))
-    style.configure("Treeview", borderwidth=1, relief="solid")  # Add border to cells
-    style.map("Treeview", background=[("selected", "#ececec")])  # Background on selection
+    style.configure("Treeview", borderwidth=1, relief="solid")
+    style.map("Treeview", background=[("selected", "#ececec")])
 
     # Center align the cell content
     style.configure("Treeview", anchor="center")
