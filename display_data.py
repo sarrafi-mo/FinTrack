@@ -114,13 +114,19 @@ def show_data(root):
 
     def on_tree_click(event):
         item = tree.identify("item", event.x, event.y)
+        if not item:  #If no item was clicked, exit the function
+            return
+    
         column = tree.identify_column(event.x)
-        record_id = tree.item(item, "tags")[0]
+        record_id = tree.item(item, "tags")
 
-        if column == "#6":  # Edit column
-            edit_record(record_id, tree)
-        elif column == "#7":  # Delete column
-            delete_record(record_id, tree)
+        # Check if record_id is available to prevent IndexError
+        if record_id:
+            record_id = record_id[0]  # Extract the actual ID from tags
+            if column == "#6":  # Edit column
+                edit_record(record_id, tree)
+            elif column == "#7":  # Delete column
+                delete_record(record_id, tree)
 
     tree.bind("<Button-1>", on_tree_click)
     tree.pack(fill=tk.BOTH, expand=True)
