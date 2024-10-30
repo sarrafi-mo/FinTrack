@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from pymongo import MongoClient
-from bson import ObjectId  # Import ObjectId for MongoDB IDs
+from bson import ObjectId
 from tkinter import messagebox
 
 # Connect to MongoDB
@@ -13,13 +13,63 @@ income_collection = db['income']
 def delete_record(record_id, tree):
     confirm = messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this record?")
     if confirm:
-        # Convert record_id to ObjectId before deletion
         income_collection.delete_one({"_id": ObjectId(record_id)})
         messagebox.showinfo("Deleted", "Record deleted successfully.")
+        for item in tree.get_children():
+            tree.delete(item)
+        load_data(tree)
+
+# Function to open edit form and update the record
+def edit_record(record_id, tree):
+    # Fetch current record data
+    record = income_collection.find_one({"_id": ObjectId(record_id)})
+    
+    # Create a new window for editing
+    edit_window = tk.Toplevel()
+    edit_window.title("Edit Record")
+    edit_window.geometry("300x250")
+
+    # Labels and Entry fields for each attribute
+    tk.Label(edit_window, text="Amount").pack()
+    amount_entry = tk.Entry(edit_window)
+    amount_entry.pack()
+    amount_entry.insert(0, record["amount"])  # Set current value
+
+    tk.Label(edit_window, text="Source").pack()
+    source_entry = tk.Entry(edit_window)
+    source_entry.pack()
+    source_entry.insert(0, record["source"])
+
+    tk.Label(edit_window, text="Description").pack()
+    description_entry = tk.Entry(edit_window)
+    description_entry.pack()
+    description_entry.insert(0, record["description"])
+
+    tk.Label(edit_window, text="Date").pack()
+    date_entry = tk.Entry(edit_window)
+    date_entry.pack()
+    date_entry.insert(0, record["date"])
+
+    # Update function to save changes to MongoDB
+    def save_changes():
+        new_data = {
+            "amount": amount_entry.get(),
+            "source": source_entry.get(),
+            "description": description_entry.get(),
+            "date": date_entry.get()
+        }
+        income_collection.update_one({"_id": ObjectId(record_id)}, {"$set": new_data})
+        messagebox.showinfo("Updated", "Record updated successfully.")
+        edit_window.destroy()
+        
         # Refresh the table view
         for item in tree.get_children():
             tree.delete(item)
         load_data(tree)
+
+    # Save button
+    save_button = tk.Button(edit_window, text="Save Changes", command=save_changes)
+    save_button.pack()
 
 # Function to load data into the table
 def load_data(tree):
@@ -29,26 +79,21 @@ def load_data(tree):
 
 # Function to display stored data in a table format
 def show_data(root):
-    # Create a new window
     data_window = tk.Toplevel(root)
     data_window.title("Stored Data")
     data_window.geometry("650x300")
 
-    # Create style for Treeview
     style = ttk.Style()
     style.configure("Treeview.Heading", font=("Arial", 10, "bold"))
     style.configure("Treeview", rowheight=25, font=("Arial", 10))
     style.configure("Treeview", borderwidth=1, relief="solid")
     style.map("Treeview", background=[("selected", "#ececec")])
 
-    # Center align the cell content
     style.configure("Treeview", anchor="center")
 
-    # Create a Treeview widget for the table with an extra column for row numbers and actions
     columns = ("Row", "Amount", "Source", "Description", "Date", "Edit", "Delete")
     tree = ttk.Treeview(data_window, columns=columns, show="headings", style="Treeview")
 
-    # Define column headings
     tree.heading("Row", text="Row")
     tree.heading("Amount", text="Amount")
     tree.heading("Source", text="Source")
@@ -57,7 +102,6 @@ def show_data(root):
     tree.heading("Edit", text="Edit")
     tree.heading("Delete", text="Delete")
 
-    # Define column widths and center alignment
     tree.column("Row", width=50, anchor="center")
     tree.column("Amount", width=80, anchor="center")
     tree.column("Source", width=100, anchor="center")
@@ -66,22 +110,17 @@ def show_data(root):
     tree.column("Edit", width=50, anchor="center")
     tree.column("Delete", width=50, anchor="center")
 
-    # Load data with edit and delete options
     load_data(tree)
 
-    # Bind click events for edit and delete actions
     def on_tree_click(event):
         item = tree.identify("item", event.x, event.y)
         column = tree.identify_column(event.x)
-        record_id = tree.item(item, "tags")[0]  # Get record ID from tags
+        record_id = tree.item(item, "tags")[0]
 
         if column == "#6":  # Edit column
-            # Placeholder for edit function
-            messagebox.showinfo("Edit", f"Edit record with ID: {record_id}")
+            edit_record(record_id, tree)
         elif column == "#7":  # Delete column
             delete_record(record_id, tree)
 
     tree.bind("<Button-1>", on_tree_click)
-
-    # Add the table to the window and pack it
     tree.pack(fill=tk.BOTH, expand=True)
